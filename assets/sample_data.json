@@ -1,0 +1,52 @@
+[
+  {
+    "id": "CL-001",
+    "category": "Roads",
+    "description": "Large pothole on Jubilee Hills Road No. 36 near the petrol bunk. Causing accidents during night.",
+    "priority": "High",
+    "status": "Open",
+    "location": { "lat": 17.4239, "lng": 78.4071, "address": "Road No. 36, Jubilee Hills, Hyderabad" },
+    "submitted_at": "2024-06-01T09:15:00",
+    "summary": "Deep pothole (~2ft wide) on main road causing vehicle damage and safety hazard."
+  },
+  {
+    "id": "CL-002",
+    "category": "Sanitation",
+    "description": "Garbage not collected for 5 days in Madhapur HITEC City lane. Overflowing bins attracting stray dogs.",
+    "priority": "High",
+    "status": "In Progress",
+    "location": { "lat": 17.4486, "lng": 78.3908, "address": "HITEC City Lane 4, Madhapur, Hyderabad" },
+    "submitted_at": "2024-06-02T11:30:00",
+    "summary": "Garbage overflow for 5+ days. Health hazard due to stray animals and odour."
+  },
+  {
+    "id": "CL-003",
+    "category": "Electricity",
+    "description": "Street light not working for 2 weeks near Banjara Hills Club Lane. Very dark at night.",
+    "priority": "Medium",
+    "status": "Open",
+    "location": { "lat": 17.4156, "lng": 78.4347, "address": "Club Lane, Banjara Hills, Hyderabad" },
+    "submitted_at": "2024-06-03T08:00:00",
+    "summary": "Non-functional streetlight for 14+ days causing safety concerns for residents."
+  },
+  {
+    "id": "CL-004",
+    "category": "Water Supply",
+    "description": "No water supply in Kukatpally sector 3 for 3 days. Pipeline seems broken.",
+    "priority": "Critical",
+    "status": "Open",
+    "location": { "lat": 17.4849, "lng": 78.3996, "address": "Sector 3, Kukatpally, Hyderabad" },
+    "submitted_at": "2024-06-04T07:45:00",
+    "summary": "Water supply disruption for 72 hours affecting multiple households. Suspected pipe burst."
+  },
+  {
+    "id": "CL-005",
+    "category": "Encroachment",
+    "description": "Footpath near LB Nagar metro station completely blocked by vendor stalls. Pedestrians forced on road.",
+    "priority": "Medium",
+    "status": "Resolved",
+    "location": { "lat": 17.3478, "lng": 78.5512, "address": "LB Nagar Metro Station, Hyderabad" },
+    "submitted_at": "2024-05-28T10:00:00",
+    "summary": "Footpath encroachment by vendors blocking pedestrian access near metro station."
+  }
+]
