@@ -1,136 +1,118 @@
-# 🏛️ CivicLens — Unified Civic Complaint Platform
+# CivicLens
 
-> **"See the City Clearly"** — An AI-powered civic complaint platform for Hyderabad & Telangana
-
----
-
-## 📋 Hackathon Submission
-
-| Field | Details |
-|-------|---------|
-| **Hackathon** | CivicTech Hackathon |
-| **Focus Area** | Hyderabad City / Telangana State |
-| **Team Size** | 3 Members |
-| **Tech Stack** | Google Gemini API · Google Maps API · Streamlit |
+> **"See the City Clearly"** — AI-powered civic complaint platform for Hyderabad & Telangana
 
 ---
 
-## 🚨 Problem Statement
+## What is CivicLens?
 
-Citizens of Hyderabad and Telangana face a **fragmented system** when reporting civic issues — potholes, garbage overflow, broken streetlights, water supply failures, encroachments, and more.
+CivicLens is a unified, AI-powered civic complaint platform where citizens of Hyderabad can report issues in text or photo format and government officials can view and act on them from a single dashboard.
 
-- Complaints are scattered across GHMC portals, Twitter, WhatsApp groups, and helpline numbers
-- There is **no unified view**, no intelligent categorization, and no accountability loop
-- Government departments receive unstructured data that is hard to act on
-
----
-
-## 💡 Solution Overview
-
-**CivicLens** (meaning *See the City Clearly*) is a unified, AI-powered civic complaint platform where:
-
-- 🗣️ Citizens submit complaints in **text, voice, or photo**
-- 🤖 **Google Gemini** auto-categorizes, prioritizes, and summarizes complaints
-- 🗺️ **Google Maps** geo-tags each complaint and renders a live heatmap of civic issues
-- 📊 A **Government Dashboard** provides a structured, filterable view for officials to act on
+**Team:** BogControls (Manav · Aniket · Aryan)  
+**Hackathon:** CivicTech Hackathon — Hyderabad City / Telangana State  
+**Stack:** Python · Streamlit · Google Gemini 1.5 Flash · Google Maps API
 
 ---
 
-## 🏗️ Architecture
+## Quick Start
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    CivicLens                       │
-├──────────────────┬──────────────────────────────────┤
-│  Citizen Portal  │       Government Dashboard        │
-│  ─────────────  │  ──────────────────────────────  │
-│  · Text input   │  · Filter by category/area        │
-│  · Voice input  │  · Priority queue                 │
-│  · Photo upload │  · Complaint heatmap              │
-│  · Location tag │  · Status update controls         │
-└────────┬─────────┴──────────────┬────────────────────┘
-         │                        │
-         ▼                        ▼
-  ┌─────────────┐        ┌──────────────┐
-  │ Gemini API  │        │ Maps API     │
-  │ · Category  │        │ · Geo-tag    │
-  │ · Priority  │        │ · Heatmap    │
-  │ · Summary   │        │ · Clustering │
-  └─────────────┘        └──────────────┘
+```bash
+# Clone and enter the directory
+git clone https://github.com/YOUR_ORG/civiclens.git
+cd civiclens
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate   # macOS/Linux
+# venv\Scripts\activate    # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run (Demo Mode — no API keys needed)
+streamlit run app.py
 ```
 
----
-
-## ✨ Key Features
-
-### For Citizens
-- **Multi-modal complaint submission** — type, speak, or photograph the issue
-- **Auto-categorization** — Gemini AI classifies into Roads, Water, Electricity, Sanitation, Encroachment, etc.
-- **Real-time status tracking** — know when your complaint is acknowledged and resolved
-- **Multilingual support** — submit complaints in Telugu or English
-
-### For Government Officials
-- **Unified dashboard** — all complaints in one place, no more fragmented channels
-- **AI-generated summaries** — structured, actionable complaint data
-- **Priority scoring** — AI flags urgent/high-impact issues automatically
-- **Heatmap visualization** — identify civic hotspots across Hyderabad zones
-- **One-click status updates** — close the accountability loop with citizens
+The app opens at **http://localhost:8501**
 
 ---
 
-## 📁 Project Structure
+## Features
+
+- **Submit complaints** in English or Telugu — text, with optional photo
+- **AI categorization** (Gemini 1.5 Flash) — auto-assigns category, priority, department, and one-line summary
+- **Geo-tagging** — plain-text location is geocoded to lat/lng via Google Maps
+- **Government Dashboard** — KPI metrics, complaint heatmap, filterable list, status update
+- **Complaint Tracking** — citizens track their `CL-XXXXXX` ID through Open → In Progress → Resolved
+- **Demo Mode** — works fully without any API keys (5 seed complaints pre-loaded)
+
+---
+
+## Project Structure
 
 ```
 civiclens/
-├── app.py                  # Main Streamlit application entry point
-├── pages/
-│   ├── citizen_portal.py   # Citizen complaint submission page
-│   ├── dashboard.py        # Government officials dashboard
-│   └── track.py            # Complaint tracking page
-├── components/
-│   ├── complaint_form.py   # Complaint submission form component
-│   ├── heatmap.py          # Google Maps heatmap component
-│   └── complaint_card.py   # Individual complaint display card
+├── app.py                      # Entry point: page config + sidebar routing
+├── _pages/
+│   ├── __init__.py
+│   ├── citizen_portal.py       # Complaint submission page
+│   ├── dashboard.py            # Government dashboard page
+│   └── track.py                # Complaint tracking page
 ├── utils/
-│   ├── gemini_helper.py    # Google Gemini API integration
-│   ├── maps_helper.py      # Google Maps API integration
-│   └── data_store.py       # In-memory data management
+│   ├── __init__.py
+│   ├── gemini_helper.py        # Gemini API client + analyze_complaint()
+│   ├── maps_helper.py          # Maps client + geocode_address() + build_heatmap_html()
+│   └── data_store.py           # Session-state CRUD + stats
 ├── assets/
-│   └── sample_data.json    # Sample complaints for demo
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment variable template
-├── README.md               # This file (submission overview)
-└── SETUP.md                # Setup & running instructions
+│   └── sample_data.json        # 5 seed complaints for demo mode
+├── requirements.txt
+├── .env.example
+├── README.md
+├── SETUP.md
+├── AGENTS.md
+├── POC.md
+├── CONTRIBUTING.md
+└── USER_MANUAL.md
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Configuration
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Streamlit | Rapid UI for citizen portal & dashboard |
-| **AI/ML** | Google Gemini 1.5 Flash | Complaint categorization, prioritization, summarization |
-| **Maps** | Google Maps API | Geo-tagging, heatmap rendering, location search |
-| **Data** | Session State + JSON | Lightweight in-memory store (demo) |
-| **Language** | Python 3.10+ | Core application logic |
+Copy `.env.example` to `.env` and fill in your keys:
 
----
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+```
 
-## 🎯 Impact
-
-- **Reduces response time** by routing complaints to the right department instantly
-- **Eliminates duplicate complaints** through AI deduplication
-- **Creates accountability** with a closed feedback loop between citizens and officials
-- **Data-driven governance** — heatmaps reveal infrastructure patterns city-wide
+Leave empty or as placeholders to run in **Demo Mode**.
 
 ---
 
-## 👥 Team
+## Demo Mode
 
-Built for Hyderabad by BogControls
+When no API keys are set:
+- AI analysis falls back to rule-based categorization (`Roads / Medium`)
+- Geocoding falls back to Hyderabad city center coordinates (17.3850, 78.4867)
+- Heatmap shows a placeholder message
+- All 5 sample complaints are pre-loaded and fully interactive
 
+---
 
-- Manav → AI & Backend (Gemini, categorization, data)
-- Aniket → Frontend & UX (all Streamlit pages, navigation)
-- Aryan → Maps & Infrastructure (Google Maps, geo-tagging, setup)
+## Supported Languages
+
+- English ✅
+- Telugu ✅ (Gemini handles Telugu input natively)
+
+---
+
+## Known Limitations (v1.0)
+
+- Data is stored in-memory (`st.session_state`) — lost on server restart
+- No user authentication
+- Shared state across all browser sessions on the same server
+- No duplicate complaint detection
+- No persistent notifications to citizens
+
+See `TECH_SPEC.md` and `DEPLOY_SPEC.md` in the spec kit for full technical details.

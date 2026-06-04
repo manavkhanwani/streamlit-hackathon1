@@ -1,37 +1,60 @@
+"""
+_pages/citizen_portal.py — Complaint submission page.
+
+Orchestrates AI analysis, geocoding, and data store on form submit.
+
+Spec compliance:
+  - PRD §6.1 (Citizen Portal features)
+  - UX_FLOWS §2 (Flow 1 — Complaint Submission)
+  - DATA_SPEC §3 (add_complaint API contract)
+  - AI_SPEC §2 (analyze_complaint usage)
+"""
+
 import streamlit as st
-from utils.gemini_helper import analyze_complaint
-from utils.maps_helper import geocode_address
-from utils.data_store import add_complaint
+
+from utils import data_store, gemini_helper, maps_helper
+
+# Priority icons per UX_FLOWS §3 (color codes table)
+PRIORITY_ICONS = {
+    "Critical": "🔴",
+    "High": "🟠",
+    "Medium": "🟡",
+    "Low": "🟢",
+}
 
 
-PRIORITY_COLOR = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}
+def show() -> None:
+    """Renders the citizen complaint submission page."""
+    st.header("🗣️ Submit a Complaint")
+    st.write(
+        "Report any civic issue in Hyderabad. Our AI will categorize "
+        "and route it to the right department."
+    )
 
+    # --- Form Inputs (UX_FLOWS §2 — Happy Path) ---
+    description = st.text_area(
+        "Describe the issue *",
+        height=150,
+        placeholder=(
+            "e.g. There is a large pothole on Road No. 36, Jubilee Hills near the petrol bunk. "
+            "Vehicles are swerving dangerously at night."
+        ),
+    )
 
-def show():
-    st.title("🏛️ Submit a Complaint")
-    st.markdown("Report any civic issue in Hyderabad. Our AI will categorize and route it to the right department.")
-    st.divider()
+    location_input = st.text_input(
+        "Location / Area *",
+        placeholder="e.g. Road No. 36, Jubilee Hills, Hyderabad",
+    )
 
-    with st.form("complaint_form", clear_on_submit=True):
-        description = st.text_area(
-            "Describe the issue *",
-            placeholder="e.g. There is a large pothole on Road No. 36, Jubilee Hills near the petrol bunk...",
-            height=150,
-        )
+    uploaded_file = st.file_uploader(
+        "Attach a photo (optional)",
+        type=["jpg", "jpeg", "png"],
+    )
 
-        location_input = st.text_input(
-            "Location / Area *",
-            placeholder="e.g. Road No. 36, Jubilee Hills, Hyderabad",
-        )
-
-        image_file = st.file_uploader(
-            "Attach a photo (optional)",
-            type=["jpg", "jpeg", "png"],
-        )
-
-        submitted = st.form_submit_button("🚀 Submit Complaint", use_container_width=True, type="primary")
+    submitted = st.button("🚀 Submit Complaint", use_container_width=True, type="primary")
 
     if submitted:
+        # --- Validation (UX_FLOWS §2 — Validation Errors) ---
         if not description.strip():
             st.error("Please describe the issue.")
             return
@@ -39,23 +62,40 @@ def show():
             st.error("Please enter a location.")
             return
 
+        # --- AI Analysis + Geocoding + Data Store ---
         with st.spinner("🤖 Analyzing your complaint with AI..."):
-            image_bytes = image_file.read() if image_file else None
-            analysis = analyze_complaint(description, image_bytes)
-            location = geocode_address(location_input)
-            complaint = add_complaint(description, location, analysis, image_bytes)
+            image_bytes = None
+            if uploaded_file is not None:
+                image_bytes = uploaded_file.read()
 
+            # AI_SPEC §2 — analyze_complaint(description, image_bytes)
+            analysis = gemini_helper.analyze_complaint(description.strip(), image_bytes)
+
+            # AI_SPEC §3 — geocode_address(address)
+            location = maps_helper.geocode_address(location_input.strip())
+
+            # DATA_SPEC §3 — add_complaint(...)
+            complaint = data_store.add_complaint(
+                description=description.strip(),
+                location=location,
+                analysis=analysis,
+                image_bytes=image_bytes,
+            )
+
+        # --- Success Display (UX_FLOWS §2 — Happy Path) ---
         st.success(f"✅ Complaint submitted! Your ID: **{complaint['id']}**")
 
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Category", complaint["category"])
         with col2:
-            icon = PRIORITY_COLOR.get(complaint["priority"], "🟡")
-            st.metric("Priority", f"{icon} {complaint['priority']}")
+            priority_icon = PRIORITY_ICONS.get(complaint["priority"], "")
+            st.metric("Priority", f"{priority_icon} {complaint['priority']}")
         with col3:
             st.metric("Department", complaint["department"])
 
         st.info(f"📝 **AI Summary:** {complaint['summary']}")
-        st.caption(f"📍 Location resolved to: {location['address']}")
-        st.caption("Track your complaint status using your ID in the **Track Complaint** page.")
+        st.caption(f"📍 Location resolved to: {complaint['location']['address']}")
+        st.caption(
+            "Track your complaint status using your ID in the **Track Complaint** page."
+        )

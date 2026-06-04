@@ -1,76 +1,116 @@
+"""
+_pages/dashboard.py — Government dashboard page.
+
+Renders KPI metrics, complaint heatmap, filterable complaint list,
+and per-complaint status update controls.
+
+Spec compliance:
+  - PRD §6.2 (Government Dashboard features)
+  - UX_FLOWS §3 (Flow 2 — Government Dashboard)
+  - DATA_SPEC §3 (get_stats, load_complaints, update_status APIs)
+  - AI_SPEC §4 (build_heatmap_html usage)
+"""
+
 import streamlit as st
-import pandas as pd
-from utils.data_store import load_complaints, update_status, get_stats
-from utils.maps_helper import build_heatmap_html
+import streamlit.components.v1 as components
 
-STATUS_OPTIONS = ["Open", "In Progress", "Resolved"]
-PRIORITY_COLOR = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}
-STATUS_COLOR = {"Open": "🔵", "In Progress": "🟡", "Resolved": "✅"}
+from utils import data_store, maps_helper
+
+# Priority icons per UX_FLOWS §3 (Priority and Status Color Codes)
+PRIORITY_ICONS = {
+    "Critical": "🔴",
+    "High": "🟠",
+    "Medium": "🟡",
+    "Low": "🟢",
+}
+
+# Status icons per UX_FLOWS §3 (Priority and Status Color Codes)
+STATUS_ICONS = {
+    "Open": "🔵",
+    "In Progress": "🟡",
+    "Resolved": "✅",
+}
+
+# Filter options — enums from DATA_SPEC §2
+CATEGORIES = ["All", "Roads", "Water Supply", "Electricity", "Sanitation", "Encroachment", "Parks", "Other"]
+PRIORITIES = ["All", "Critical", "High", "Medium", "Low"]
+STATUSES = ["All", "Open", "In Progress", "Resolved"]
 
 
-def show():
-    st.title("📊 Government Dashboard")
-    st.markdown("Manage and respond to citizen complaints across Hyderabad.")
-    st.divider()
+def show() -> None:
+    """Renders the government dashboard page."""
+    st.header("📊 Government Dashboard")
+    st.write("Manage and respond to citizen complaints across Hyderabad.")
 
-    stats = get_stats()
+    # --- KPI Metrics Row (PRD §6.2, UX_FLOWS §3 — 4 columns) ---
+    stats = data_store.get_stats()
+    by_status = stats["by_status"]
+
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Complaints", stats["total"])
-    col2.metric("Open", stats["by_status"].get("Open", 0))
-    col3.metric("In Progress", stats["by_status"].get("In Progress", 0))
-    col4.metric("Resolved", stats["by_status"].get("Resolved", 0))
+    col2.metric("Open", by_status.get("Open", 0))
+    col3.metric("In Progress", by_status.get("In Progress", 0))
+    col4.metric("Resolved", by_status.get("Resolved", 0))
 
-    st.divider()
-
-    # Heatmap
+    # --- Complaint Heatmap (PRD §6.2, AI_SPEC §4) ---
     with st.expander("🗺️ Complaint Heatmap", expanded=True):
-        complaints = load_complaints()
-        heatmap_html = build_heatmap_html(complaints)
-        st.components.v1.html(heatmap_html, height=440)
+        complaints_all = data_store.load_complaints()
+        heatmap_html = maps_helper.build_heatmap_html(complaints_all)
+        components.html(heatmap_html, height=440)
 
-    st.divider()
-
-    # Filters
+    # --- Filterable Complaint List (PRD §6.2, UX_FLOWS §3) ---
     st.subheader("📋 All Complaints")
-    col_f1, col_f2, col_f3 = st.columns(3)
 
-    all_cats = sorted({c.get("category", "Other") for c in load_complaints()})
-    selected_cat = col_f1.selectbox("Filter by Category", ["All"] + all_cats)
-    selected_priority = col_f2.selectbox("Filter by Priority", ["All", "Critical", "High", "Medium", "Low"])
-    selected_status = col_f3.selectbox("Filter by Status", ["All"] + STATUS_OPTIONS)
+    f_col1, f_col2, f_col3 = st.columns(3)
+    with f_col1:
+        filter_category = st.selectbox("Filter by Category", CATEGORIES)
+    with f_col2:
+        filter_priority = st.selectbox("Filter by Priority", PRIORITIES)
+    with f_col3:
+        filter_status = st.selectbox("Filter by Status", STATUSES)
 
-    complaints = load_complaints()
+    # Client-side filtering (UX_FLOWS §3 — Filter Behaviour)
+    complaints = data_store.load_complaints()
     filtered = [
         c for c in complaints
-        if (selected_cat == "All" or c.get("category") == selected_cat)
-        and (selected_priority == "All" or c.get("priority") == selected_priority)
-        and (selected_status == "All" or c.get("status") == selected_status)
+        if (filter_category == "All" or c.get("category") == filter_category)
+        and (filter_priority == "All" or c.get("priority") == filter_priority)
+        and (filter_status == "All" or c.get("status") == filter_status)
     ]
 
-    st.caption(f"Showing {len(filtered)} complaint(s)")
+    st.caption(f"Showing **{len(filtered)}** complaint(s)")
 
+    # --- Complaint Cards (UX_FLOWS §3 — Complaint Cards) ---
     for c in filtered:
-        priority_icon = PRIORITY_COLOR.get(c.get("priority", "Medium"), "🟡")
-        status_icon = STATUS_COLOR.get(c.get("status", "Open"), "🔵")
+        priority_icon = PRIORITY_ICONS.get(c.get("priority", "Medium"), "")
+        summary_preview = c.get("summary", "")[:80]
+        expander_label = f"{priority_icon} {c['id']} · {c.get('category', 'Other')} — {summary_preview}"
 
-        with st.expander(f"{priority_icon} [{c['id']}] {c.get('category', 'Other')} — {c.get('summary', '')[:80]}"):
-            col_l, col_r = st.columns([2, 1])
+        with st.expander(expander_label):
+            left, right = st.columns([2, 1])
 
-            with col_l:
-                st.markdown(f"**Description:** {c.get('description', 'N/A')}")
-                st.markdown(f"**📍 Location:** {c.get('location', {}).get('address', 'N/A')}")
-                st.markdown(f"**🏢 Department:** {c.get('department', 'N/A')}")
-                st.caption(f"Submitted: {c.get('submitted_at', 'N/A')[:16]}")
+            with left:
+                st.markdown(f"**Description:** {c.get('description', '')}")
+                st.markdown(f"**Location:** {c.get('location', {}).get('address', 'N/A')}")
+                st.markdown(f"**Department:** {c.get('department', 'N/A')}")
+                # Display first 16 chars of ISO timestamp: YYYY-MM-DDTHH:MM → YYYY-MM-DD HH:MM
+                submitted_at = c.get("submitted_at", "")[:16].replace("T", " ")
+                st.markdown(f"**Submitted:** {submitted_at}")
 
-            with col_r:
-                st.markdown(f"**Status:** {status_icon} {c.get('status', 'Open')}")
+            with right:
+                current_status = c.get("status", "Open")
+                status_icon = STATUS_ICONS.get(current_status, "")
+                st.markdown(f"**Status:** {status_icon} {current_status}")
+
                 new_status = st.selectbox(
                     "Update Status",
-                    STATUS_OPTIONS,
-                    index=STATUS_OPTIONS.index(c.get("status", "Open")),
-                    key=f"status_{c['id']}",
+                    ["Open", "In Progress", "Resolved"],
+                    index=["Open", "In Progress", "Resolved"].index(current_status),
+                    key=f"status_select_{c['id']}",
                 )
+
+                # Save button — status does NOT change until Save is clicked (UX_FLOWS §3)
                 if st.button("💾 Save", key=f"save_{c['id']}"):
-                    update_status(c["id"], new_status)
+                    data_store.update_status(c["id"], new_status)
                     st.success("Status updated!")
                     st.rerun()
